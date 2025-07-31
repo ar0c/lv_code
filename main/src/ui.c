@@ -2,7 +2,10 @@
 #include "lvgl.h"
 #include <string.h>
 #include "ui_label_manage.h"
-#include "freertos/FreeRTOS.h"
+#include <stdlib.h>   // for malloc, free
+#include <stdio.h>
+#include "FreeRTOS.h"
+#include "task.h"
 
 lv_obj_t *create_colored_label(const char *text,int x_offset, int y_offset)
 {
@@ -54,34 +57,6 @@ void ui_show_text_async(const char *text, int x_offset, int y_offset)
     lv_async_call(ui_show_text_cb, p);
 }
 
-
-// 回调函数，用于处理按钮点击事件
-static void ok_button_callback(lv_event_t *e) {
-    lv_obj_t *btnmatrix = lv_event_get_target(e);
-    lv_obj_t *msgbox = lv_obj_get_parent(btnmatrix);  // msgbox
-    lv_obj_t *modal = lv_obj_get_parent(msgbox);      // modal container
-
-    lv_obj_del(modal);  // 删除整个 modal，包括 msgbox 和背景
-}
-
-// 显示消息框的函数
-void show_message_box(const char *title, const char *text) {
-    static const char *btns[] = {"OK", "Cancel", NULL}; // 消息框按钮
-
-    // 创建一个消息框
-    lv_obj_t *message_box = lv_msgbox_create(NULL, title, text, btns, false);
-
-    // 设置消息框的大小和位置
-    lv_obj_set_width(message_box, 300);
-    lv_obj_align(message_box, LV_ALIGN_CENTER, 0, 0);
-
-    // 获取消息框中的按钮，并为其添加事件回调
-    lv_obj_t *ok_button = lv_msgbox_get_btns(message_box);
-    lv_obj_add_event_cb(ok_button, ok_button_callback, LV_EVENT_CLICKED, message_box);
-
-    lv_obj_t *buttons = lv_msgbox_get_btns(message_box);
-}
-
 static lv_obj_t *label_wifi_status = NULL;
 
 void wifi_status_ui_init(void)
@@ -105,28 +80,22 @@ void ui_init(void)
 }
 static void shutdown_task(void *arg) {
     vTaskDelay(pdMS_TO_TICKS(500));  // 可选延迟
-    esp_restart();  // 或 axp2101_shutdown();
     vTaskDelete(NULL);
 }
 static void shutdown_msgbox_event_cb(lv_event_t *e) {
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *msgbox = lv_event_get_target(e);
-
-    if (code == LV_EVENT_VALUE_CHANGED) {
-        const char *btn_txt = lv_msgbox_get_active_btn_text(msgbox);
-        if (strcmp(btn_txt, "Shutdown") == 0) {
-            lv_obj_del(msgbox);
-            ui_label_show(2, "Shutting down...", 0, 60, 2000);
-            xTaskCreate(shutdown_task, "shutdown_task", 2048, NULL, 5, NULL);
-        } else {
-            lv_msgbox_close(msgbox);
-        }
-    }
+    lv_obj_t * msgbox = lv_event_get_user_data(e);
+    lv_msgbox_close(msgbox);
+    ui_label_show(2, "Shutting down...", 0, 60, 2000);
+    xTaskCreate(shutdown_task, "shutdown_task", 2048, NULL, 5, NULL);
 }
 
 void show_shutdown_prompt(void) {
-    lv_obj_t *msgbox = lv_msgbox_create(NULL, "Warning", "Shutdown?", NULL, true);
+    lv_obj_t *msgbox = lv_msgbox_create(NULL);
+    lv_msgbox_add_title(msgbox, "Shutdown?");
+    lv_msgbox_add_text(msgbox, "Are you sure you want to shutdown?");
+    lv_obj_t * shutdownBtn = lv_msgbox_add_footer_button(msgbox, "Shutdown");
+    lv_obj_t * cancelBtn = lv_msgbox_add_footer_button(msgbox, "Cancel");
+    lv_obj_add_event_cb(shutdownBtn, shutdown_msgbox_event_cb, LV_EVENT_CLICKED, msgbox);
+    lv_obj_add_event_cb(cancelBtn, shutdown_msgbox_event_cb, LV_EVENT_CLICKED, msgbox);
     lv_obj_center(msgbox);
-    lv_obj_t *btn_shutdown = lv_msgbox_add_footer_button(msgbox, "Shutdown");
-    lv_obj_add_event_cb(btn_shutdown, shutdown_msgbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 }

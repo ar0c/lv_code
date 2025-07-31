@@ -2,19 +2,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
-#define MAX_UI_LABELS 8
-
-typedef struct {
-    bool used;
-    lv_obj_t *label;
-    uint32_t expire_tick; // 0 means no timeout
-} ui_label_slot_t;
+#include "ui_label_manage.h"
 
 static ui_label_slot_t label_slots[MAX_UI_LABELS];
 
 void ui_label_manager_init(void) {
-    LV_ASSERT(lv_scr_act()); 
+    LV_ASSERT(lv_scr_act());
     memset(label_slots, 0, sizeof(label_slots));
 }
 

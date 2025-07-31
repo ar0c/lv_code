@@ -1,4 +1,6 @@
-// ui_label_manager.h
+#ifndef UI_LABEL_MANAGE_H
+#define UI_LABEL_MANAGE_H
+
 #pragma once
 #include "lvgl.h"
 
@@ -16,3 +18,5 @@ void ui_label_manager_init(void);
 void ui_label_show(int id, const char *text, int x_offset, int y_offset, uint32_t duration_ms);
 void ui_label_hide(int id);
 void ui_label_manager_task(void);  // 定期调用隐藏过期 label
+
+#endif

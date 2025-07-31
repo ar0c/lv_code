@@ -74,6 +74,9 @@ if(USE_FREERTOS)
         ${PROJECT_SOURCE_DIR}/main/src/freertos_main.cpp
         ${PROJECT_SOURCE_DIR}/main/src/mouse_cursor_icon.c
         ${PROJECT_SOURCE_DIR}/main/src/FreeRTOS_Posix_Port.c
+        ${PROJECT_SOURCE_DIR}/main/src/ui_label_manage.c
+        ${PROJECT_SOURCE_DIR}/main/src/ui.c
+        ${PROJECT_SOURCE_DIR}/main/src/wifi.c
     )
     target_link_libraries(main freertos_config FreeRTOS)
 else()
