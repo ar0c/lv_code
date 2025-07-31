@@ -90,3 +90,11 @@ void event_wait(Event_t *event)
         pthread_mutex_unlock(&event->mutex);  /* Unlock the mutex after waiting */
     }
 }
+
+
+void vApplicationMallocFailedHook(void)
+{
+    // 可以在此添加日志、断言或重启逻辑
+    printf("Malloc failed!\n");
+    // abort(); // 可选：终止程序
+}

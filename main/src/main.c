@@ -23,6 +23,8 @@
 #include "lvgl/examples/lv_examples.h"
 #include "lvgl/demos/lv_demos.h"
 #include <SDL.h>
+#include "FreeRTOS.h"
+#include "task.h"
 
 /*********************
  *      DEFINES
@@ -70,11 +72,15 @@ extern void freertos_main(void);
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
-
+ static void shutdown_task(void *arg) {
+  vTaskDelay(pdMS_TO_TICKS(500));  // 可选延迟
+  vTaskDelete(NULL);
+}
 int main(int argc, char **argv)
 {
   (void)argc; /*Unused*/
   (void)argv; /*Unused*/
+  xTaskCreate(shutdown_task, "shutdown_task", 2048, NULL, 5, NULL);
 
   /*Initialize LVGL*/
   lv_init();

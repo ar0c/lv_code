@@ -6,7 +6,7 @@ set(FREERTOS_PORT GCC_POSIX CACHE STRING "Port for FreeRTOS on Posix environment
 
 unset(USE_FREERTOS CACHE)
 
-option(USE_FREERTOS "Enable FreeRTOS" OFF) # Turn this on to enable FreeRTOS
+option(USE_FREERTOS "Enable FreeRTOS" ON) # Turn this on to enable FreeRTOS
 
 if(USE_FREERTOS)
     message(STATUS "FreeRTOS is enabled")
@@ -16,23 +16,23 @@ if(USE_FREERTOS)
     target_include_directories(freertos_config SYSTEM INTERFACE ${PROJECT_SOURCE_DIR}/config)
     target_compile_definitions(freertos_config INTERFACE projCOVERAGE_TEST=0)
 
-    # Add FreeRTOS as a subdirectory
-    add_subdirectory(FreeRTOS)
-
-    # FreeRTOS-specific include directories
-    include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS/include)
-    include_directories(${PROJECT_SOURCE_DIR}/FreeRTOS/portable/ThirdParty/GCC/Posix)
-    include_directories(${PROJECT_SOURCE_DIR}/config)
-
-    # Add FreeRTOS sources
+    # Add FreeRTOS as a static library
     file(GLOB FREERTOS_SOURCES
         "${PROJECT_SOURCE_DIR}/FreeRTOS/*.c"
         "${PROJECT_SOURCE_DIR}/FreeRTOS/portable/MemMang/heap_4.c"
         "${PROJECT_SOURCE_DIR}/FreeRTOS/portable/ThirdParty/GCC/Posix/*.c"
     )
+
+    add_library(FreeRTOS STATIC ${FREERTOS_SOURCES})
+
+    target_include_directories(FreeRTOS PUBLIC
+        ${PROJECT_SOURCE_DIR}/FreeRTOS/include
+        ${PROJECT_SOURCE_DIR}/FreeRTOS/portable/ThirdParty/GCC/Posix
+        ${PROJECT_SOURCE_DIR}/FreeRTOS/portable/MemMang
+        ${PROJECT_SOURCE_DIR}/config
+    )
 else()
     message(STATUS "FreeRTOS is disabled")
-    set(FREERTOS_SOURCES "")  # No FreeRTOS sources if FreeRTOS is disabled
 endif()
 
 # Main include files of the project
@@ -74,9 +74,7 @@ if(USE_FREERTOS)
         ${PROJECT_SOURCE_DIR}/main/src/freertos_main.cpp
         ${PROJECT_SOURCE_DIR}/main/src/mouse_cursor_icon.c
         ${PROJECT_SOURCE_DIR}/main/src/FreeRTOS_Posix_Port.c
-        ${FREERTOS_SOURCES}  # Add only if USE_FREERTOS is enabled
     )
-    # Link FreeRTOS libraries
     target_link_libraries(main freertos_config FreeRTOS)
 else()
     add_executable(main
@@ -92,11 +90,6 @@ if(MSVC)
     target_link_libraries(main lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES})
 else()
     target_link_libraries(main lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES} m pthread)
-endif()
-
-# Only link freertos_config if the FreeRTOS directory exists
-if(USE_FREERTOS)
-    target_link_libraries(main freertos_config)
 endif()
 
 # Custom target to run the executable
@@ -160,10 +153,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         -Wextra
         -Wformat-security
         -Wmaybe-uninitialized
-        # -Wmissing-prototypes
         -Wpointer-arith
         -Wmultichar
-        -Wno-pedantic # ignored for now, we convert functions to pointers for properties table.
+        -Wno-pedantic
         -Wreturn-type
         -Wshadow
         -Wshift-negative-value
@@ -176,15 +168,14 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         -Wstrict-aliasing
     )
 
-if (ASAN)
-    message(STATUS "AddressSanitizer enabled")
+    if (ASAN)
+        message(STATUS "AddressSanitizer enabled")
 
-    # Add AddressSanitizer flags
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
-else()
-    message(STATUS "AddressSanitizer disabled")
-endif()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
+    else()
+        message(STATUS "AddressSanitizer disabled")
+    endif()
 endif()
