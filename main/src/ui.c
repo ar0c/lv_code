@@ -39,7 +39,7 @@ typedef struct {
     int y_offset;
 } ui_text_param_t;
 
-static void ui_show_text_cb(void *param)
+void ui_show_text_cb(void *param)
 {
     ui_text_param_t *p = (ui_text_param_t *)param;
     create_colored_label(p->text, p->x_offset, p->y_offset);
@@ -55,23 +55,6 @@ void ui_show_text_async(const char *text, int x_offset, int y_offset)
     p->y_offset = y_offset;
 
     lv_async_call(ui_show_text_cb, p);
-}
-
-static lv_obj_t *label_wifi_status = NULL;
-
-void wifi_status_ui_init(void)
-{
-    label_wifi_status = lv_label_create(lv_scr_act());
-    lv_obj_align(label_wifi_status, LV_ALIGN_TOP_RIGHT, -20, 10);
-    lv_obj_set_style_text_color(label_wifi_status, lv_color_hex(0x0000ff), LV_PART_MAIN);
-    lv_label_set_text(label_wifi_status, "WiFi: Idle");
-}
-
-void wifi_status_ui_set_text(const char *text)
-{
-    if (label_wifi_status) {
-        lv_label_set_text(label_wifi_status, text);
-    }
 }
 
 void ui_init(void)

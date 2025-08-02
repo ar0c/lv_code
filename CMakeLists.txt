@@ -77,6 +77,7 @@ if(USE_FREERTOS)
         ${PROJECT_SOURCE_DIR}/main/src/ui_label_manage.c
         ${PROJECT_SOURCE_DIR}/main/src/ui.c
         ${PROJECT_SOURCE_DIR}/main/src/wifi.c
+        ${PROJECT_SOURCE_DIR}/main/src/icon/icon_all.c
     )
     target_link_libraries(main freertos_config FreeRTOS)
 else()

@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   ui_label_manager_init();
   ui_init();
   ui_label_show(0, "Hello", 0, 0, 2000);
-  create_wifi_buttons_ui();
+  create_wifi_ui();
   while(1) {
     /* Periodically call the lv_task handler.
      * It could be done in a timer interrupt or an OS task too.*/
